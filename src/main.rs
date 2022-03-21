@@ -6,6 +6,7 @@ fn main() {
 mod digging_method {
 
     use rand::prelude::*;
+    use rand::seq::SliceRandom;
 
     pub fn setup() {
 
@@ -57,44 +58,85 @@ mod digging_method {
 
         // store direction
         let mut directions: Vec<Directions> = Vec::new();
+        let mut positions: Vec<(usize, usize)> = Vec::new();
 
         // can dig or not
         // Check if usize is a negative value
         if let Some(step_y) = y.checked_sub(2) {
             if can_dig(step_y, x, &maze) {
-                println!("px: {}, py: {}", x, step_y);
                 directions.push(Directions::Up);
+                positions.push((step_y, x));
             }
         }
 
         if can_dig(y+2, x, &maze) {
-            println!("px: {}, py: {}", x, y+2);
             directions.push(Directions::Down);
+            positions.push((y+2, x));
         }
 
         // Check if usize is a negative value
         if let Some(step_x) = x.checked_sub(2) {
             if can_dig(y, step_x, &maze) {
-                println!("px: {}, py: {}", step_x, y);
                 directions.push(Directions::Left);
+                positions.push((y, step_x));
             }
         }
         if can_dig(y, x+2, &maze) {
-            println!("px: {}, py: {}", x+2, y);
             directions.push(Directions::Right);
+            positions.push((y, x+2));
         }
 
+        // cannot dig
         if directions.is_empty() {
             return;
         }
 
         maze[y][x] = '.';
-        for d in directions {
-            println!("{:?}", d);
-        }
 
-        for line in maze {
+        for line in maze.iter() {
             println!("{:?}", line);
+        }
+        println!("{:?}", positions);
+
+        // get random directions
+        let mut rng = thread_rng();
+        directions.shuffle(&mut rng);
+
+        for direction in directions {
+            let mut update_x = 0;
+            let mut update_y = 0;
+            match direction {
+                Directions::Up => {
+                    println!("Up");
+                    // y-1, y-2
+                    maze[y-1][x] = '.';
+                    update_x = x;
+                    update_y = y-2;
+                },
+                Directions::Down => {
+                    println!("Down");
+                    // y+1, y+2
+                    maze[y+1][x] = '.';
+                    update_x = x;
+                    update_y = y + 1;
+                },
+                Directions::Left => {
+                    println!("Left");
+                    // x-1, x-2
+                    maze[y][x-1] = '.';
+                    update_x = x - 2;
+                    update_y = y;
+                },
+                Directions::Right=> {
+                    println!("Right");
+                    // x+1, x+2
+                    maze[y][x+1] = '.';
+                    update_x = x + 2;
+                    update_y = y;
+                },
+            }
+
+            digger(update_y, update_x, maze);
         }
     }
 
