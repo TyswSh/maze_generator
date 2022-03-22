@@ -1,4 +1,3 @@
-
 fn main() {
     digging_method::setup();
 }
@@ -9,9 +8,8 @@ mod digging_method {
     use rand::seq::SliceRandom;
 
     pub fn setup() {
-
         let maze_width = 7;
-        let maze_height = 5;
+        let maze_height = 7;
 
         let mut maze: Vec<Vec<char>> = Vec::new();
 
@@ -42,8 +40,9 @@ mod digging_method {
                 }
             }
         };
+        println!("Start position...");
         println!("x: {}, y: {}", x, y);
-        digger(x, y, &mut maze);
+        digger(y, x, &mut maze);
     }
 
     #[derive(Debug)]
@@ -54,89 +53,64 @@ mod digging_method {
         Right,
     }
 
-    fn digger(x: usize, y: usize, maze: &mut Vec<Vec<char>>) {
-
+    fn digger(y: usize, x: usize, maze: &mut Vec<Vec<char>>) {
         // store direction
-        let mut directions: Vec<Directions> = Vec::new();
-        let mut positions: Vec<(usize, usize)> = Vec::new();
-
-        // can dig or not
-        // Check if usize is a negative value
-        if let Some(step_y) = y.checked_sub(2) {
-            if can_dig(step_y, x, &maze) {
-                directions.push(Directions::Up);
-                positions.push((step_y, x));
-            }
-        }
-
-        if can_dig(y+2, x, &maze) {
-            directions.push(Directions::Down);
-            positions.push((y+2, x));
-        }
-
-        // Check if usize is a negative value
-        if let Some(step_x) = x.checked_sub(2) {
-            if can_dig(y, step_x, &maze) {
-                directions.push(Directions::Left);
-                positions.push((y, step_x));
-            }
-        }
-        if can_dig(y, x+2, &maze) {
-            directions.push(Directions::Right);
-            positions.push((y, x+2));
-        }
-
-        // cannot dig
-        if directions.is_empty() {
-            return;
-        }
+        let mut directions: Vec<Directions> = vec![
+            Directions::Up,
+            Directions::Down,
+            Directions::Left,
+            Directions::Right,
+        ];
 
         maze[y][x] = '.';
-
-        for line in maze.iter() {
-            println!("{:?}", line);
-        }
-        println!("{:?}", positions);
 
         // get random directions
         let mut rng = thread_rng();
         directions.shuffle(&mut rng);
 
         for direction in directions {
-            let mut update_x = 0;
-            let mut update_y = 0;
             match direction {
                 Directions::Up => {
-                    println!("Up");
+                    // println!("Up");
                     // y-1, y-2
-                    maze[y-1][x] = '.';
-                    update_x = x;
-                    update_y = y-2;
-                },
+                    if let Some(step_y) = y.checked_sub(2) {
+                        if can_dig(step_y, x, maze) {
+                            maze[y - 1][x] = '.';
+                            digger(step_y, x, maze);
+                        }
+                    }
+                }
                 Directions::Down => {
-                    println!("Down");
+                    // println!("Down");
                     // y+1, y+2
-                    maze[y+1][x] = '.';
-                    update_x = x;
-                    update_y = y + 1;
-                },
+                    if can_dig(y + 2, x, maze) {
+                        maze[y + 1][x] = '.';
+                        digger(y + 2, x, maze);
+                    }
+                }
                 Directions::Left => {
-                    println!("Left");
+                    // println!("Left");
                     // x-1, x-2
-                    maze[y][x-1] = '.';
-                    update_x = x - 2;
-                    update_y = y;
-                },
-                Directions::Right=> {
-                    println!("Right");
+                    if let Some(step_x) = x.checked_sub(2) {
+                        if can_dig(y, step_x, maze) {
+                            maze[y][x - 1] = ' ';
+                            digger(y, step_x, maze);
+                        }
+                    }
+                }
+                Directions::Right => {
+                    // println!("Right");
                     // x+1, x+2
-                    maze[y][x+1] = '.';
-                    update_x = x + 2;
-                    update_y = y;
-                },
+                    if can_dig(y, x + 2, maze) {
+                        maze[y][x + 1] = '.';
+                        digger(y, x + 2, maze);
+                    }
+                }
             }
 
-            digger(update_y, update_x, maze);
+            for l in maze.iter() {
+                println!("{:?}", l);
+            }
         }
     }
 
@@ -148,7 +122,7 @@ mod digging_method {
                 let z = x.get(dx);
                 match z {
                     None => false,
-                    Some(&w)=> {
+                    Some(&w) => {
                         if w == '.' {
                             false
                         } else {
@@ -157,6 +131,6 @@ mod digging_method {
                     }
                 }
             }
-        }
+        };
     }
 }
