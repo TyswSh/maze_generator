@@ -1,5 +1,9 @@
 fn main() {
-    digging_method::setup();
+    let maze = digging_method::generate();
+    for l in maze {
+        let x: String = l.into_iter().collect();
+        println!("{}", x);
+    }
 }
 
 mod digging_method {
@@ -7,9 +11,9 @@ mod digging_method {
     use rand::prelude::*;
     use rand::seq::SliceRandom;
 
-    pub fn setup() {
-        let maze_width = 7;
-        let maze_height = 7;
+    pub fn generate() -> Vec<Vec<char>> {
+        let maze_width = 13;
+        let maze_height = 13;
 
         let mut maze: Vec<Vec<char>> = Vec::new();
 
@@ -40,9 +44,7 @@ mod digging_method {
                 }
             }
         };
-        println!("Start position...");
-        println!("x: {}, y: {}", x, y);
-        digger(y, x, &mut maze);
+        return digger(y, x, &mut maze);
     }
 
     #[derive(Debug)]
@@ -53,7 +55,7 @@ mod digging_method {
         Right,
     }
 
-    fn digger(y: usize, x: usize, maze: &mut Vec<Vec<char>>) {
+    fn digger(y: usize, x: usize, maze: &mut Vec<Vec<char>>) -> Vec<Vec<char>> {
         // store direction
         let mut directions: Vec<Directions> = vec![
             Directions::Up,
@@ -62,12 +64,13 @@ mod digging_method {
             Directions::Right,
         ];
 
-        maze[y][x] = '.';
+        maze[y][x] = ' ';
 
         // get random directions
         let mut rng = thread_rng();
         directions.shuffle(&mut rng);
 
+        let mut updated_maze: Vec<Vec<char>> = maze.to_vec();
         for direction in directions {
             match direction {
                 Directions::Up => {
@@ -75,8 +78,8 @@ mod digging_method {
                     // y-1, y-2
                     if let Some(step_y) = y.checked_sub(2) {
                         if can_dig(step_y, x, maze) {
-                            maze[y - 1][x] = '.';
-                            digger(step_y, x, maze);
+                            maze[y - 1][x] = ' ';
+                            updated_maze = digger(step_y, x, maze);
                         }
                     }
                 }
@@ -84,8 +87,8 @@ mod digging_method {
                     // println!("Down");
                     // y+1, y+2
                     if can_dig(y + 2, x, maze) {
-                        maze[y + 1][x] = '.';
-                        digger(y + 2, x, maze);
+                        maze[y + 1][x] = ' ';
+                        updated_maze = digger(y + 2, x, maze);
                     }
                 }
                 Directions::Left => {
@@ -94,7 +97,7 @@ mod digging_method {
                     if let Some(step_x) = x.checked_sub(2) {
                         if can_dig(y, step_x, maze) {
                             maze[y][x - 1] = ' ';
-                            digger(y, step_x, maze);
+                            updated_maze = digger(y, step_x, maze);
                         }
                     }
                 }
@@ -102,16 +105,14 @@ mod digging_method {
                     // println!("Right");
                     // x+1, x+2
                     if can_dig(y, x + 2, maze) {
-                        maze[y][x + 1] = '.';
-                        digger(y, x + 2, maze);
+                        maze[y][x + 1] = ' ';
+                        updated_maze = digger(y, x + 2, maze);
                     }
                 }
             }
-
-            for l in maze.iter() {
-                println!("{:?}", l);
-            }
+            debug_printer(maze.to_vec());
         }
+        updated_maze
     }
 
     fn can_dig(dy: usize, dx: usize, maze: &Vec<Vec<char>>) -> bool {
@@ -123,7 +124,7 @@ mod digging_method {
                 match z {
                     None => false,
                     Some(&w) => {
-                        if w == '.' {
+                        if w == ' ' {
                             false
                         } else {
                             true
@@ -132,5 +133,11 @@ mod digging_method {
                 }
             }
         };
+    }
+
+    fn debug_printer(maze: Vec<Vec<char>>) {
+        for i in maze {
+            println!("{}", i.into_iter().collect::<String>());
+        }
     }
 }
