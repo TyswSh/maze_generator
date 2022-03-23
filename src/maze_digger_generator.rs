@@ -1,5 +1,4 @@
-use rand::prelude::*;
-use rand::seq::SliceRandom;
+use rand::{seq::SliceRandom, thread_rng, Rng};
 
 pub fn generate() -> Vec<Vec<char>> {
     let maze_width = 13;
