@@ -91,7 +91,7 @@ impl DiggerMethod {
                 Directions::Down => {
                     // y+1, y+2
                     // println!("Down");
-                    if self.can_dig(y, x + 2) {
+                    if self.can_dig(y + 2, x) {
                         self.maze.set_path(y + 1, x, self.maze.path);
                         self.digger(y + 2, x);
                     }
