@@ -9,23 +9,23 @@ enum Directions {
 }
 
 #[derive(Debug, Clone)]
-struct Map {
-    map: Vec<Vec<char>>,
+pub struct MazeGrid {
+    grid: Vec<Vec<char>>,
     path: char,
     wall: char,
 }
 
-impl Map {
-    fn new(h: usize, w: usize, path: char, wall: char) -> Map {
-        Map {
-            map: (0..h).map(|_| vec![wall; w]).collect(),
+impl MazeGrid {
+    fn fill_wall_new(h: usize, w: usize, path: char, wall: char) -> MazeGrid {
+        MazeGrid {
+            grid: (0..h).map(|_| vec![wall; w]).collect(),
             path: path,
             wall: wall,
         }
     }
 
     fn set_path(&mut self, y: usize, x: usize, path: char) {
-        self.map[y][x] = path;
+        self.grid[y][x] = path;
     }
 
     fn get_map(self) -> Self {
@@ -37,7 +37,7 @@ impl Map {
 pub(crate) struct DiggerMethod {
     width: usize,
     height: usize,
-    maze: Map,
+    maze: MazeGrid,
 }
 
 impl DiggerMethod {
@@ -45,7 +45,7 @@ impl DiggerMethod {
         DiggerMethod {
             width,
             height,
-            maze: Map::new(height, width, path, wall),
+            maze: MazeGrid::fill_wall_new(height, width, path, wall),
         }
     }
 
@@ -114,27 +114,27 @@ impl DiggerMethod {
     }
 
     fn can_dig(&self, dy: usize, dx: usize) -> bool {
-        let y = self.maze.map.get(dy);
-        return match y {
-            None => false,
-            Some(x) => {
-                let z = x.get(dx);
-                match z {
-                    None => false,
-                    Some(&w) => {
-                        if w == self.maze.path {
-                            false
-                        } else {
-                            true
-                        }
-                    }
-                }
-            }
-        };
+        if self.height <= dy || dy < 0 {
+            return false;
+        }
+
+        if self.width <= dx || dx < 0 {
+            return false;
+        }
+
+        let pos = self.maze.grid[dy][dx];
+        if pos == self.maze.path {
+            return false;
+        }
+        true
+    }
+
+    pub fn get_maze(self) -> MazeGrid {
+        self.maze.get_map()
     }
 
     pub fn inspect_maze(&self) {
-        for i in &self.maze.map {
+        for i in &self.maze.grid {
             println!("{}", i.into_iter().collect::<String>());
         }
     }
