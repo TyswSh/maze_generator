@@ -1,5 +1,3 @@
-use std::ptr::NonNull;
-
 use rand::{seq::SliceRandom, thread_rng, Rng};
 
 #[derive(Debug)]
@@ -14,7 +12,6 @@ enum Directions {
 struct MazeGrid {
     grid: Vec<Vec<char>>,
     path: char,
-    wall: char,
 }
 
 impl MazeGrid {
@@ -22,7 +19,6 @@ impl MazeGrid {
         MazeGrid {
             grid: (0..h).map(|_| vec![wall; w]).collect(),
             path: path,
-            wall: wall,
         }
     }
 
