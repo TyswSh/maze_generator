@@ -1,3 +1,5 @@
+use std::ptr::NonNull;
+
 use rand::{seq::SliceRandom, thread_rng, Rng};
 
 #[derive(Debug)]
@@ -9,7 +11,7 @@ enum Directions {
 }
 
 #[derive(Debug, Clone)]
-pub struct MazeGrid {
+struct MazeGrid {
     grid: Vec<Vec<char>>,
     path: char,
     wall: char,
@@ -25,11 +27,15 @@ impl MazeGrid {
     }
 
     fn set_path(&mut self, y: usize, x: usize, path: char) {
-        self.grid[y][x] = path;
-    }
-
-    fn get_map(self) -> Self {
-        self.clone()
+        match self.grid.get(y) {
+            None => println!("y: {}, out of baunce", y),
+            Some(l) => match l.get(x) {
+                None => println!("x: {}, out of baunce", x),
+                Some(_) => {
+                    self.grid[y][x] = path;
+                }
+            },
+        }
     }
 }
 
@@ -50,8 +56,8 @@ impl DiggerMethod {
     }
 
     pub fn generate(&mut self) {
-        let x = get_random_position(&self.width);
         let y = get_random_position(&self.height);
+        let x = get_random_position(&self.width);
         self.digger(y, x);
     }
 
@@ -63,7 +69,7 @@ impl DiggerMethod {
             Directions::Right,
         ];
 
-        self.maze.set_path(x, y, self.maze.path);
+        self.maze.set_path(y, x, self.maze.path);
 
         // get random directions
         let mut rng = thread_rng();
@@ -114,23 +120,22 @@ impl DiggerMethod {
     }
 
     fn can_dig(&self, dy: usize, dx: usize) -> bool {
-        if self.height <= dy || dy < 0 {
+        if dy >= self.height {
             return false;
         }
 
-        if self.width <= dx || dx < 0 {
+        if dx >= self.width {
             return false;
         }
 
-        let pos = self.maze.grid[dy][dx];
-        if pos == self.maze.path {
+        if self.maze.grid[dy][dx] == self.maze.path {
             return false;
         }
         true
     }
 
-    pub fn get_maze(self) -> MazeGrid {
-        self.maze.get_map()
+    pub fn get_maze_grid(self) -> Vec<Vec<char>> {
+        self.maze.grid
     }
 
     pub fn inspect_maze(&self) {
