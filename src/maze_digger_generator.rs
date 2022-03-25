@@ -27,15 +27,7 @@ impl MazeGrid {
     }
 
     fn set_path(&mut self, y: usize, x: usize, path: char) {
-        match self.grid.get(y) {
-            None => println!("y: {}, out of baunce", y),
-            Some(l) => match l.get(x) {
-                None => println!("x: {}, out of baunce", x),
-                Some(_) => {
-                    self.grid[y][x] = path;
-                }
-            },
-        }
+        self.grid[y][x] = path;
     }
 }
 
