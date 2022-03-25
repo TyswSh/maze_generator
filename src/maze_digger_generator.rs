@@ -1,3 +1,5 @@
+use std::ptr::NonNull;
+
 use rand::{seq::SliceRandom, thread_rng, Rng};
 
 #[derive(Debug)]
@@ -9,23 +11,31 @@ enum Directions {
 }
 
 #[derive(Debug, Clone)]
-struct Map {
-    map: Vec<Vec<char>>,
+struct MazeGrid {
+    grid: Vec<Vec<char>>,
+    path: char,
+    wall: char,
 }
 
-impl Map {
-    fn new(h: usize, w: usize, wall: char) -> Map {
-        Map {
-            map: (0..h).map(|_| vec![wall; w]).collect(),
+impl MazeGrid {
+    fn fill_wall_new(h: usize, w: usize, path: char, wall: char) -> MazeGrid {
+        MazeGrid {
+            grid: (0..h).map(|_| vec![wall; w]).collect(),
+            path: path,
+            wall: wall,
         }
     }
 
     fn set_path(&mut self, y: usize, x: usize, path: char) {
-        self.map[y][x] = path;
-    }
-
-    fn get_map(self) -> Self {
-        self.clone()
+        match self.grid.get(y) {
+            None => println!("y: {}, out of baunce", y),
+            Some(l) => match l.get(x) {
+                None => println!("x: {}, out of baunce", x),
+                Some(_) => {
+                    self.grid[y][x] = path;
+                }
+            },
+        }
     }
 }
 
@@ -33,9 +43,7 @@ impl Map {
 pub(crate) struct DiggerMethod {
     width: usize,
     height: usize,
-    path: char,
-    wall: char,
-    maze: Map,
+    maze: MazeGrid,
 }
 
 impl DiggerMethod {
@@ -43,20 +51,17 @@ impl DiggerMethod {
         DiggerMethod {
             width,
             height,
-            path,
-            wall,
-            maze: Map::new(height, width, wall),
+            maze: MazeGrid::fill_wall_new(height, width, path, wall),
         }
     }
 
     pub fn generate(&mut self) {
-        let x = get_random_position(&self.width);
         let y = get_random_position(&self.height);
+        let x = get_random_position(&self.width);
         self.digger(y, x);
     }
 
     fn digger(&mut self, y: usize, x: usize) {
-        // store direction
         let mut directions: Vec<Directions> = vec![
             Directions::Up,
             Directions::Down,
@@ -64,7 +69,7 @@ impl DiggerMethod {
             Directions::Right,
         ];
 
-        self.maze.set_path(x, y, self.path);
+        self.maze.set_path(y, x, self.maze.path);
 
         // get random directions
         let mut rng = thread_rng();
@@ -75,37 +80,38 @@ impl DiggerMethod {
             match direction {
                 Directions::Up => {
                     // y-1, y-2
-                    println!("Up");
+                    // println!("Up");
                     if let Some(steped_y) = y.checked_sub(2) {
                         if self.can_dig(steped_y, x) {
-                            self.maze.set_path(y - 1, x, self.path);
+                            self.maze.set_path(y - 1, x, self.maze.path);
                             self.digger(steped_y, x);
                         }
                     }
                 }
                 Directions::Down => {
                     // y+1, y+2
-                    println!("Down");
-                    if self.can_dig(y, x + 2) {
-                        self.maze.set_path(y, x + 1, self.path);
-                        self.digger(y, x + 2);
+                    // println!("Down");
+                    if self.can_dig(y + 2, x) {
+                        self.maze.set_path(y + 1, x, self.maze.path);
+                        self.digger(y + 2, x);
                     }
                 }
                 Directions::Left => {
                     // x-1, x-2
-                    println!("Left");
+                    // println!("Left");
                     if let Some(steped_x) = x.checked_sub(2) {
                         if self.can_dig(y, steped_x) {
-                            self.maze.set_path(y, x - 1, self.path);
+                            self.maze.set_path(y, x - 1, self.maze.path);
                             self.digger(y, steped_x);
                         }
                     }
                 }
                 Directions::Right => {
                     // x+1, x+2
-                    println!("Right");
+                    // println!("Right");
                     if self.can_dig(y, x + 2) {
-                        self.maze.set_path(y, x + 1, self.path);
+                        self.maze.set_path(y, x + 1, self.maze.path);
+                        self.digger(y, x + 2);
                     }
                 }
             }
@@ -114,27 +120,26 @@ impl DiggerMethod {
     }
 
     fn can_dig(&self, dy: usize, dx: usize) -> bool {
-        let y = self.maze.map.get(dy);
-        return match y {
-            None => false,
-            Some(x) => {
-                let z = x.get(dx);
-                match z {
-                    None => false,
-                    Some(&w) => {
-                        if w == ' ' {
-                            false
-                        } else {
-                            true
-                        }
-                    }
-                }
-            }
-        };
+        if dy >= self.height {
+            return false;
+        }
+
+        if dx >= self.width {
+            return false;
+        }
+
+        if self.maze.grid[dy][dx] == self.maze.path {
+            return false;
+        }
+        true
+    }
+
+    pub fn get_maze_grid(self) -> Vec<Vec<char>> {
+        self.maze.grid
     }
 
     pub fn inspect_maze(&self) {
-        for i in &self.maze.map {
+        for i in &self.maze.grid {
             println!("{}", i.into_iter().collect::<String>());
         }
     }

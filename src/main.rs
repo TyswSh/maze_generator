@@ -4,4 +4,5 @@ fn main() {
     let mut mdm = maze_digger_generator::DiggerMethod::new(7, 7, '.', '#');
     mdm.generate();
     mdm.inspect_maze();
+    // let gird = mdm.get_maze_grid();
 }
