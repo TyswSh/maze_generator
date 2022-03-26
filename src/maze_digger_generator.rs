@@ -1,4 +1,4 @@
-use std::ptr::NonNull;
+use std::panic;
 
 use rand::{seq::SliceRandom, thread_rng, Rng};
 
@@ -10,11 +10,10 @@ enum Directions {
     Right,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 struct MazeGrid {
     grid: Vec<Vec<char>>,
     path: char,
-    wall: char,
 }
 
 impl MazeGrid {
@@ -22,20 +21,11 @@ impl MazeGrid {
         MazeGrid {
             grid: (0..h).map(|_| vec![wall; w]).collect(),
             path: path,
-            wall: wall,
         }
     }
 
     fn set_path(&mut self, y: usize, x: usize, path: char) {
-        match self.grid.get(y) {
-            None => println!("y: {}, out of baunce", y),
-            Some(l) => match l.get(x) {
-                None => println!("x: {}, out of baunce", x),
-                Some(_) => {
-                    self.grid[y][x] = path;
-                }
-            },
-        }
+        self.grid[y][x] = path;
     }
 }
 
@@ -47,7 +37,14 @@ pub(crate) struct DiggerMethod {
 }
 
 impl DiggerMethod {
-    pub fn new(width: usize, height: usize, path: char, wall: char) -> DiggerMethod {
+    pub fn new(height: usize, width: usize, path: char, wall: char) -> DiggerMethod {
+        if height < 3 || width < 3 {
+            panic!(
+                "Invalid value: height = {} or width = {} are 2 or less!!\nPlease input values' height and width greater than 2.",
+                height,
+                width,
+            );
+        }
         DiggerMethod {
             width,
             height,
@@ -165,4 +162,56 @@ fn get_random_position(length: &usize) -> usize {
         }
     };
     pos
+}
+
+#[cfg(test)]
+mod test {
+    use super::{DiggerMethod, MazeGrid};
+
+    #[test]
+    #[should_panic]
+    fn panic_test() {
+        DiggerMethod::new(2, 5, '.', '#');
+        DiggerMethod::new(5, 1, '.', '#');
+        DiggerMethod::new(2, 1, '.', '#');
+    }
+
+    #[test]
+    fn five_five_maze() {
+        let mut digger = DiggerMethod::new(5, 5, '.', '#');
+        digger.generate();
+        let maze_gird = digger.get_maze_grid();
+
+        let mut output = vec![
+            vec!['#'; 5],
+            vec!['#', '.', '.', '.', '#'],
+            vec!['#', '.', '#', '.', '#'],
+            vec!['#', '.', '.', '.', '#'],
+            vec!['#'; 5],
+        ];
+
+        for i in 1..4 {
+            for j in 1..4 {
+                if i == 2 && j == 2 {
+                    continue;
+                }
+                let c = maze_gird[i][j];
+                if c == '#' {
+                    output[i][j] = '#';
+                    break;
+                }
+            }
+        }
+
+        assert_eq!(maze_gird, output);
+    }
+
+    #[test]
+    fn three_three_maze() {
+        let mut digger = DiggerMethod::new(3, 3, '.', '#');
+        digger.generate();
+        let maze_grid = digger.get_maze_grid();
+        let output = vec![vec!['#'; 3], vec!['#', '.', '#'], vec!['#'; 3]];
+        assert_eq!(maze_grid, output);
+    }
 }
