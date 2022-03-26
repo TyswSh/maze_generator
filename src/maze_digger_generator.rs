@@ -37,8 +37,8 @@ pub(crate) struct DiggerMethod {
 }
 
 impl DiggerMethod {
-    pub fn new(width: usize, height: usize, path: char, wall: char) -> DiggerMethod {
-        if width < 3 || height < 3 {
+    pub fn new(height: usize, width: usize, path: char, wall: char) -> DiggerMethod {
+        if height < 3 || width < 3 {
             panic!(
                 "Invalid value: height = {} or width = {} are 2 or less!!\nPlease input values' height and width greater than 2.",
                 height,
