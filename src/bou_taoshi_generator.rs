@@ -100,28 +100,24 @@ impl BouTaoshiMethod {
         match direction {
             Directions::Up => {
                 // y-1
-                println!("Up");
                 if self.can_topple(y - 1, x) {
                     self.maze.set_path(y - 1, x);
                 }
             }
             Directions::Down => {
                 // y+1
-                println!("Down");
                 if self.can_topple(y + 1, x) {
                     self.maze.set_path(y + 1, x);
                 }
             }
             Directions::Left => {
                 // x-1
-                println!("Left");
                 if self.can_topple(y, x - 1) {
                     self.maze.set_path(y, x - 1);
                 }
             }
             Directions::Right => {
                 // x+1
-                println!("Right");
                 if self.can_topple(y, x + 1) {
                     self.maze.set_path(y, x + 1);
                 }
