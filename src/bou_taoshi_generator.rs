@@ -1,11 +1,12 @@
 use std::panic;
 
-use rand::{seq::SliceRandom, thread_rng, Rng};
+use rand::{thread_rng, Rng};
 
 #[derive(Debug)]
 struct MazeGrid {
     grid: Vec<Vec<char>>,
     path: char,
+    wall: char,
 }
 
 impl MazeGrid {
@@ -21,7 +22,12 @@ impl MazeGrid {
         MazeGrid {
             grid: init_grid,
             path,
+            wall,
         }
+    }
+
+    fn set_path(&mut self, y: usize, x: usize) {
+        self.grid[y][x] = self.wall;
     }
 
     fn inspect_grid(&self) {
@@ -31,7 +37,7 @@ impl MazeGrid {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 enum Directions {
     Up,
     Down,
@@ -62,20 +68,19 @@ impl BouTaoshiMethod {
     }
 
     pub fn generate(&mut self) {
-        let y = get_random_position(&self.height);
-        let x = get_random_position(&self.width);
-
         for i in (0..self.height).step_by(2) {
             for j in (0..self.width).step_by(2) {
-                if i == 0 || i == self.height || j == 0 || j == self.width {
-                    println!("y:{}, x:{}", i, j);
+                if i == 0 || i == self.height - 1 || j == 0 || j == self.width - 1 {
+                    continue;
                 }
+                // println!("y:{}, x:{}", i, j);
+                self.topple(i, j);
             }
         }
     }
 
     fn topple(&mut self, y: usize, x: usize) {
-        let mut directions: Vec<Directions> = vec![
+        let directions: Vec<Directions> = vec![
             Directions::Up,
             Directions::Down,
             Directions::Left,
@@ -83,35 +88,52 @@ impl BouTaoshiMethod {
         ];
 
         let mut rng = thread_rng();
-        directions.shuffle(&mut rng);
 
-        // 3行目以降は上を選択しない，壁がある場所は壁を選択しない
-        for direction in directions {}
+        // 2行目以降は上を選択しない，壁がある場所は壁を選択しない
+        let direction: Directions;
+        if y > 2 {
+            direction = directions[rng.gen_range(1..4)];
+        } else {
+            direction = directions[rng.gen_range(0..4)];
+        }
+
+        match direction {
+            Directions::Up => {
+                // y-1
+                println!("Up");
+                if self.can_topple(y - 1, x) {
+                    self.maze.set_path(y - 1, x);
+                }
+            }
+            Directions::Down => {
+                // y+1
+                println!("Down");
+                if self.can_topple(y + 1, x) {
+                    self.maze.set_path(y + 1, x);
+                }
+            }
+            Directions::Left => {
+                // x-1
+                println!("Left");
+                if self.can_topple(y, x - 1) {
+                    self.maze.set_path(y, x - 1);
+                }
+            }
+            Directions::Right => {
+                // x+1
+                println!("Right");
+                if self.can_topple(y, x + 1) {
+                    self.maze.set_path(y, x + 1);
+                }
+            }
+        }
+    }
+
+    fn can_topple(&self, y: usize, x: usize) -> bool {
+        self.maze.grid[y][x] == self.maze.path
     }
 
     pub fn inspect_maze(&self) {
         self.maze.inspect_grid();
     }
-}
-
-fn get_random_position(length: &usize) -> usize {
-    let mut rng = thread_rng();
-    let pos: usize = {
-        if length % 2 == 0 {
-            loop {
-                let n: usize = rng.gen_range(0..*length);
-                if n % 2 == 0 {
-                    break n;
-                }
-            }
-        } else {
-            loop {
-                let n = rng.gen_range(0..*length) as usize;
-                if n % 2 != 0 {
-                    break n;
-                }
-            }
-        }
-    };
-    pos
 }
